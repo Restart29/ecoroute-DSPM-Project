@@ -250,7 +250,6 @@ with tab2:
                 f"For transit distances under 700 km ({distance_km:.0f} km), intermodal transfer overhead and lead-time delays offset carbon and cost benefits. "
                 f"Recommend standard road carriage paired with EV last-mile delivery."
             )
-
 # =============================================================================
 # TAB 3: SPATIAL HUB ALLOCATION (K-MEANS)
 # =============================================================================
@@ -264,28 +263,32 @@ with tab3:
         "lat": centroids[:, 0],
         "lon": centroids[:, 1],
         "Cluster": [f"Hub Centroid {i}" for i in range(len(centroids))],
-        "Type": ["Green Hub Centroid"] * len(centroids)
+        "Type": ["Green Hub Centroid"] * len(centroids),
+        "Node Size": [15] * len(centroids)  # Assign size directly to a column
     })
 
-    # Sample reference data if available
-    if os.path.exists("data/processed_emissions_v2.csv"):
+    # Sample reference data if available on the cloud server
+    try:
         sample_geo = pd.read_csv("data/processed_emissions_v2.csv", nrows=400)
         customer_points = pd.DataFrame({
             "lat": sample_geo["cust_lat"],
             "lon": sample_geo["cust_lng"],
             "Cluster": [f"Cluster {cid}" for cid in sample_geo["hub_cluster_id"]],
-            "Type": ["Delivery Node"] * len(sample_geo)
+            "Type": ["Delivery Node"] * len(sample_geo),
+            "Node Size": [4] * len(sample_geo)  # Assign size directly to a column
         })
         combined_map = pd.concat([customer_points, centroid_df], ignore_index=True)
-    else:
+    except Exception:
+        # Fallback if the CSV isn't found on the cloud server
         combined_map = centroid_df
 
+    # Render Map safely using the column name
     fig_map = px.scatter_mapbox(
         combined_map,
         lat="lat",
         lon="lon",
         color="Cluster",
-        size=[18 if t == "Green Hub Centroid" else 5 for t in combined_map["Type"]],
+        size="Node Size",  # Pass the column name, not a list
         hover_name="Type",
         zoom=3.4,
         center={"lat": -15.78, "lon": -47.92},
@@ -298,7 +301,6 @@ with tab3:
     st.info(
         "💡 **Operational Value:** Deploying fulfillment hubs at these 5 K-Means centroids reduces average interstate road mileage by 28.4%, directly cutting Scope 3 upstream transport emissions."
     )
-
 # =============================================================================
 # TAB 4: TECHNICAL RIGOR & MODEL EXPLAINABILITY
 # =============================================================================
