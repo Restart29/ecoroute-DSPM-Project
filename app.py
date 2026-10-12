@@ -257,45 +257,48 @@ with tab3:
     st.subheader("Spatial Network Optimization (K-Means Clustering)")
     st.markdown("Partitioning historical delivery coordinates to identify 5 optimal regional consolidation centroids.")
 
-    # Extract centroids
+    # Extract centroids from K-Means model
     centroids = kmeans_model.cluster_centers_
-    centroid_df = pd.DataFrame({
-        "lat": centroids[:, 0],
-        "lon": centroids[:, 1],
-        "Cluster": [f"Hub Centroid {i}" for i in range(len(centroids))],
-        "Type": ["Green Hub Centroid"] * len(centroids),
-        "Node Size": [15] * len(centroids)  # Assign size directly to a column
-    })
+    
+    # Build Map using robust Graph Objects instead of Plotly Express
+    fig_map = go.Figure()
 
-    # Sample reference data if available on the cloud server
+    # Layer 1: Plot Delivery Nodes (Safely handles if CSV is missing on Cloud)
     try:
         sample_geo = pd.read_csv("data/processed_emissions_v2.csv", nrows=400)
-        customer_points = pd.DataFrame({
-            "lat": sample_geo["cust_lat"],
-            "lon": sample_geo["cust_lng"],
-            "Cluster": [f"Cluster {cid}" for cid in sample_geo["hub_cluster_id"]],
-            "Type": ["Delivery Node"] * len(sample_geo),
-            "Node Size": [4] * len(sample_geo)  # Assign size directly to a column
-        })
-        combined_map = pd.concat([customer_points, centroid_df], ignore_index=True)
+        fig_map.add_trace(go.Scattermapbox(
+            lat=sample_geo["cust_lat"],
+            lon=sample_geo["cust_lng"],
+            mode='markers',
+            marker=go.scattermapbox.Marker(size=5, color='#636EFA', opacity=0.5),
+            text=[f"Cluster {cid}" for cid in sample_geo["hub_cluster_id"]],
+            hoverinfo="text",
+            name="Delivery Nodes"
+        ))
     except Exception:
-        # Fallback if the CSV isn't found on the cloud server
-        combined_map = centroid_df
+        pass 
 
-    # Render Map safely using the column name
-    fig_map = px.scatter_mapbox(
-        combined_map,
-        lat="lat",
-        lon="lon",
-        color="Cluster",
-        size="Node Size",  # Pass the column name, not a list
-        hover_name="Type",
-        zoom=3.4,
-        center={"lat": -15.78, "lon": -47.92},
+    # Layer 2: Plot the 5 Hub Centroids
+    fig_map.add_trace(go.Scattermapbox(
+        lat=centroids[:, 0],
+        lon=centroids[:, 1],
+        mode='markers',
+        marker=go.scattermapbox.Marker(size=16, color='#EF553B'),
+        text=[f"Green Hub Centroid {i}" for i in range(len(centroids))],
+        hoverinfo="text",
+        name="Hub Centroids"
+    ))
+
+    # Apply Cloud-Safe Layout
+    fig_map.update_layout(
         mapbox_style="carto-positron",
-        title="Brazilian Logistics Consolidation Nodes & Algorithmic Hub Centroids"
+        mapbox=dict(center=dict(lat=-15.78, lon=-47.92), zoom=3.4),
+        margin={"r":0, "t":40, "l":0, "b":0},
+        height=480,
+        title="Brazilian Logistics Consolidation Nodes & Algorithmic Hub Centroids",
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
     )
-    fig_map.update_layout(height=480)
+    
     st.plotly_chart(fig_map, use_container_width=True)
 
     st.info(
