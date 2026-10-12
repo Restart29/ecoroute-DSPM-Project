@@ -257,41 +257,66 @@ with tab3:
     st.subheader("Spatial Network Optimization (K-Means Clustering)")
     st.markdown("Partitioning historical delivery coordinates to identify 5 optimal regional consolidation centroids.")
 
-    # 1. Extract centroids from K-Means model
+    # 1. Extract Hub Centroids
     centroids = kmeans_model.cluster_centers_
-    
-    # Create DataFrame for Hubs (Large Red Dots)
     hub_df = pd.DataFrame({
         "lat": centroids[:, 0],
         "lon": centroids[:, 1],
-        "color": ["#EF553B"] * len(centroids), # Plotly Red
-        "size": [45000] * len(centroids)       # Large radius
+        "Cluster": [f"Hub Centroid {i}" for i in range(len(centroids))],
+        "Type": ["Green Hub Centroid"] * len(centroids),
+        "Node_Size": [12] * len(centroids) 
     })
 
-    # 2. Extract Customer Nodes (Small Blue Dots)
-    try:
-        sample_geo = pd.read_csv("data/processed_emissions_v2.csv", nrows=500)
-        customer_df = pd.DataFrame({
-            "lat": sample_geo["cust_lat"],
-            "lon": sample_geo["cust_lng"],
-            "color": ["#636EFA"] * len(sample_geo), # Plotly Blue
-            "size": [6000] * len(sample_geo)        # Small radius
-        })
-        # Combine both datasets
-        map_data = pd.concat([customer_df, hub_df], ignore_index=True)
-    except Exception:
-        # Fallback if CSV is not found on the cloud
-        map_data = hub_df
+    # 2. Smart Path Search for Customer Nodes
+    import os
+    
+    # Check if it's in the data folder, or if it was uploaded directly to the main folder
+    if os.path.exists("data/processed_emissions_v2.csv"):
+        file_path = "data/processed_emissions_v2.csv"
+    elif os.path.exists("processed_emissions_v2.csv"):
+        file_path = "processed_emissions_v2.csv"
+    else:
+        file_path = None
 
-    # 3. Render Native Streamlit Map (100% Cloud Safe)
-    st.map(
-        map_data,
-        latitude="lat",
-        longitude="lon",
-        color="color",
-        size="size",
-        zoom=3
+    if file_path:
+        try:
+            sample_geo = pd.read_csv(file_path, nrows=450)
+            customer_df = pd.DataFrame({
+                "lat": sample_geo["cust_lat"],
+                "lon": sample_geo["cust_lng"],
+                "Cluster": [f"Cluster {cid}" for cid in sample_geo["hub_cluster_id"]],
+                "Type": ["Delivery Node"] * len(sample_geo),
+                "Node_Size": [3] * len(sample_geo) 
+            })
+            combined_map = pd.concat([customer_df, hub_df], ignore_index=True)
+        except Exception as e:
+            st.warning(f"⚠️ **Error reading CSV:** {e}")
+            combined_map = hub_df
+    else:
+        st.warning("⚠️ **Data Not Found on Cloud:** Could not locate `processed_emissions_v2.csv` in the root or data/ folder. Displaying Hub Centroids only.")
+        combined_map = hub_df
+
+    # 3. Render Rich Plotly Map
+    fig_map = px.scatter_mapbox(
+        combined_map,
+        lat="lat",
+        lon="lon",
+        color="Cluster",
+        size="Node_Size",
+        hover_name="Type",
+        zoom=3.4,
+        center={"lat": -15.78, "lon": -47.92},
+        mapbox_style="carto-darkmatter",
+        title="Consolidation Nodes & Algorithmic Hub Centroids"
     )
+    
+    fig_map.update_layout(
+        height=480,
+        margin={"r":0,"t":40,"l":0,"b":0},
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(fig_map, use_container_width=True)
 
     st.info(
         "💡 **Operational Value:** Deploying fulfillment hubs at these 5 K-Means centroids reduces average interstate road mileage by 28.4%, directly cutting Scope 3 upstream transport emissions."
