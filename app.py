@@ -257,49 +257,41 @@ with tab3:
     st.subheader("Spatial Network Optimization (K-Means Clustering)")
     st.markdown("Partitioning historical delivery coordinates to identify 5 optimal regional consolidation centroids.")
 
-    # Extract centroids from K-Means model
+    # 1. Extract centroids from K-Means model
     centroids = kmeans_model.cluster_centers_
     
-    # Build Map using robust Graph Objects instead of Plotly Express
-    fig_map = go.Figure()
+    # Create DataFrame for Hubs (Large Red Dots)
+    hub_df = pd.DataFrame({
+        "lat": centroids[:, 0],
+        "lon": centroids[:, 1],
+        "color": ["#EF553B"] * len(centroids), # Plotly Red
+        "size": [45000] * len(centroids)       # Large radius
+    })
 
-    # Layer 1: Plot Delivery Nodes (Safely handles if CSV is missing on Cloud)
+    # 2. Extract Customer Nodes (Small Blue Dots)
     try:
-        sample_geo = pd.read_csv("data/processed_emissions_v2.csv", nrows=400)
-        fig_map.add_trace(go.Scattermapbox(
-            lat=sample_geo["cust_lat"],
-            lon=sample_geo["cust_lng"],
-            mode='markers',
-            marker=go.scattermapbox.Marker(size=5, color='#636EFA', opacity=0.5),
-            text=[f"Cluster {cid}" for cid in sample_geo["hub_cluster_id"]],
-            hoverinfo="text",
-            name="Delivery Nodes"
-        ))
+        sample_geo = pd.read_csv("data/processed_emissions_v2.csv", nrows=500)
+        customer_df = pd.DataFrame({
+            "lat": sample_geo["cust_lat"],
+            "lon": sample_geo["cust_lng"],
+            "color": ["#636EFA"] * len(sample_geo), # Plotly Blue
+            "size": [6000] * len(sample_geo)        # Small radius
+        })
+        # Combine both datasets
+        map_data = pd.concat([customer_df, hub_df], ignore_index=True)
     except Exception:
-        pass 
+        # Fallback if CSV is not found on the cloud
+        map_data = hub_df
 
-    # Layer 2: Plot the 5 Hub Centroids
-    fig_map.add_trace(go.Scattermapbox(
-        lat=centroids[:, 0],
-        lon=centroids[:, 1],
-        mode='markers',
-        marker=go.scattermapbox.Marker(size=16, color='#EF553B'),
-        text=[f"Green Hub Centroid {i}" for i in range(len(centroids))],
-        hoverinfo="text",
-        name="Hub Centroids"
-    ))
-
-    # Apply Cloud-Safe Layout
-    fig_map.update_layout(
-        mapbox_style="carto-positron",
-        mapbox=dict(center=dict(lat=-15.78, lon=-47.92), zoom=3.4),
-        margin={"r":0, "t":40, "l":0, "b":0},
-        height=480,
-        title="Brazilian Logistics Consolidation Nodes & Algorithmic Hub Centroids",
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+    # 3. Render Native Streamlit Map (100% Cloud Safe)
+    st.map(
+        map_data,
+        latitude="lat",
+        longitude="lon",
+        color="color",
+        size="size",
+        zoom=3
     )
-    
-    st.plotly_chart(fig_map, use_container_width=True)
 
     st.info(
         "💡 **Operational Value:** Deploying fulfillment hubs at these 5 K-Means centroids reduces average interstate road mileage by 28.4%, directly cutting Scope 3 upstream transport emissions."
