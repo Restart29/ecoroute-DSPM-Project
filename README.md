@@ -6,17 +6,17 @@ Developed as a capstone project, this platform ingests the Brazilian E-Commerce 
 
 ## 🚀 Key Features
 
-* **Multi-Modal Carbon Inference:** Predicts baseline diesel road emissions and simulates the exact CO2e and line-haul cost reductions of shifting freight to Intermodal Rail or Coastal Cabotage (Sea).
+- **Multi-Modal Carbon Inference:** Predicts baseline diesel road emissions and simulates the exact CO2e and line-haul cost reductions of shifting freight to Intermodal Rail or Coastal Cabotage (Sea).
 
-* **ISO 14083 / GLEC v3.0 Compliance:** Calculates emissions using verified Tier-3 default activity methods ($0.102\text{ kg CO}_2\text{e} / \text{tonne-km}$ for road).
+- **ISO 14083 / GLEC v3.0 Compliance:** Calculates emissions using verified Tier-3 default activity methods ($0.102\text{ kg CO}_2\text{e} / \text{tonne-km}$ for road).
 
-* **Spatial Network Optimization (K-Means):** Unsupervised clustering of historical customer coordinates to identify the 5 optimal regional consolidation hubs, reducing average transit distances by \~28%.
+- **Spatial Network Optimization (K-Means):** Unsupervised clustering of historical customer coordinates to identify the 5 optimal regional consolidation hubs, reducing average transit distances by \~28%.
 
-* **Dual-Model Benchmarking:** Compares Gradient Boosted Trees (XGBoost) against a Deep Multi-Layer Perceptron (Neural Network) using 5-Fold Cross-Validation.
+- **Dual-Model Benchmarking:** Compares Gradient Boosted Trees (XGBoost) against a Deep Multi-Layer Perceptron (Neural Network) using 5-Fold Cross-Validation.
 
-* **Executive Explainability (SHAP):** Transparent feature attribution via SHAP TreeExplainer to prove regulatory compliance for ESG auditors.
+- **Executive Explainability (SHAP):** Transparent feature attribution via SHAP TreeExplainer to prove regulatory compliance for ESG auditors.
 
-* **Interactive Cockpit (Streamlit):** A 5-tab executive UI featuring Plotly geospatial maps, real-time modal trade-off simulators, and an automated Scope 3 Audit Memo generator.
+- **Interactive Cockpit (Streamlit):** A 5-tab executive UI featuring Plotly geospatial maps, real-time modal trade-off simulators, and an automated Scope 3 Audit Memo generator.
 
 ## 📂 Repository Structure
 
@@ -94,12 +94,12 @@ streamlit run app.py
 
 ## 👥 Authors
 
-* **Team:** 
+- **Team:**
 
   $$
-  Your Team Name / Members
+  Team-2
   $$
 
-* **Domain:** Advanced Supply Chain Analytics
+- **Domain:** Advanced Supply Chain Analytics
 
-* **Course:** Capstone Project
+- **Course:** Data Science for Manager using Python
