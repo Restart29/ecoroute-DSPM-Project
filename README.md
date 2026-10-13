@@ -94,11 +94,7 @@ streamlit run app.py
 
 ## 👥 Authors
 
-- **Team:**
-
-  $$
-  Team-2
-  $$
+- **Team:** Team-2
 
 - **Domain:** Advanced Supply Chain Analytics
 
